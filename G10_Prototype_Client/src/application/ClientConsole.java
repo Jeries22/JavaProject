@@ -22,6 +22,7 @@ import client.ChatClient;
  * @author Dr Robert Lagani&egrave;re
  * @version July 2000
  */
+//comment
 public class ClientConsole implements ChatIF {
 	// Class variables *************************************************
 
