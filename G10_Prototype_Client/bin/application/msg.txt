@@ -1,0 +1,317 @@
+
+Codingdevil.com
+Skip to content
+
+    Home Tips and Tricks Linux Hadoop Cloud C CPP Java Privacy Policy Contact Us About Us 
+
+Transfer file using java socket
+By Mohamadali Shaikh | August 23, 2015	
+5 Comments
+Transfer file using java socket image
+
+Transfer file using java socket image
+
+After lots of Study I prepared a code which can transfer file using java socket programming which can be executed on two different machines and this code can transfer any kind of file via java socket. I have also written code in most simple and easy way which can be understand by beginner in java. You can click here to download or view and simply execute program using Java. This code is purely written in Core Java (J2SE) so no need for setting up any native library, and it is simple to understand. I have also written some more post on java sockets which will help you to understand the concept of simplest and easiest way to perform any transaction over socket.
+
+you can click on below link to visit
+
+1) simple chat application using java socket programming for understanding how the socket works and how to write simple and basic code for socket programming in java
+
+2)simple chat application using java socket programming for getting sample project and simple code to perform two way text chat communication between two machines.
+
+source code for Transfer file using java socket (server / sender)[run this code first].
+
+package com;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Scanner;
+
+public class Sender {
+	public static Scanner scanner;
+	/**
+	 * 
+	 * @param args
+	 * this function collect all required data from user.
+	 * @throws IOException 
+	 */
+	public static void main(String[] args) throws IOException
+	{
+		String fileLocation;
+		int portNo;
+		scanner=new Scanner(System.in);
+		System.out.println("Enter port number of machine(e.g. '2000') :");
+		portNo=scanner.nextInt();
+		System.out.println("Please enter file location with file name (e.g. 'D:\\abc.txt'): ");
+		fileLocation=scanner.next();
+		 Sender.send(portNo,fileLocation);
+	}
+	/**
+	 * this function actually transfers file
+	 * @param portNo
+	 * @param fileLocation
+	 * @return
+	 * @throws IOException 
+	 */
+	public static  void send(int portNo,String fileLocation) throws IOException
+	{
+
+		FileInputStream fileInputStream = null;
+		BufferedInputStream bufferedInputStream = null;
+
+		OutputStream outputStream = null;
+		ServerSocket serverSocket = null;
+		Socket socket = null;
+
+		//creating connection between sender and receiver
+		try {
+			serverSocket = new ServerSocket(portNo);
+			System.out.println("Waiting for receiver...");
+				try {
+						socket = serverSocket.accept();
+						System.out.println("Accepted connection : " + socket);
+						//connection established successfully
+	
+						//creating object to send file
+						File file = new File (fileLocation);
+						byte [] byteArray  = new byte [(int)file.length()];
+						fileInputStream = new FileInputStream(file);
+						bufferedInputStream = new BufferedInputStream(fileInputStream);
+						bufferedInputStream.read(byteArray,0,byteArray.length); // copied file into byteArray
+	
+						//sending file through socket
+						outputStream = socket.getOutputStream();
+						System.out.println("Sending " + fileLocation + "( size: " + byteArray.length + " bytes)");
+						outputStream.write(byteArray,0,byteArray.length);			//copying byteArray to socket
+						outputStream.flush();										//flushing socket
+						System.out.println("Done.");								//file has been sent
+					}
+					finally {
+						if (bufferedInputStream != null) bufferedInputStream.close();
+						if (outputStream != null) bufferedInputStream.close();
+						if (socket!=null) socket.close();
+					}		
+			} catch (IOException e) {
+				
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			finally {
+				if (serverSocket != null) serverSocket.close();
+			}
+	}
+}
+
+ 
+
+source code for Transfer file using java socket (client / receiver )[run this code after you see waiting in serever output].
+
+package com;
+
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.util.Scanner;
+
+public class Receiver {
+
+
+	public static Scanner scanner;
+
+
+	public static void main (String [] args ) throws IOException {
+
+
+		String fileLocation,ipAddress;
+		int portNo;
+		scanner=new Scanner(System.in);
+		System.out.println("Enter ipAddress of machine(if you are testing this on same machine than enter 127.0.0.1) :");
+		ipAddress=scanner.next();
+
+		System.out.println("Enter port number of machine(e.g. '2000') :");
+		portNo=scanner.nextInt();
+		System.out.println("Please enter file location with file name to save (e.g. 'D:\\abc.txt'): ");		//you can modify this program to receive file name from server and then you can skip this step
+		fileLocation=scanner.next();
+		Receiver.receiveFile(ipAddress, portNo, fileLocation);
+
+
+	}
+	public static void receiveFile(String ipAddress,int portNo,String fileLocation) throws IOException
+	{
+
+		int bytesRead=0;
+		int current = 0;
+		FileOutputStream fileOutputStream = null;
+		BufferedOutputStream bufferedOutputStream = null;
+		Socket socket = null;
+		try {
+
+			//creating connection.
+			socket = new Socket(ipAddress,portNo);
+			System.out.println("connected.");
+			
+			// receive file
+			byte [] byteArray  = new byte [6022386];					//I have hard coded size of byteArray, you can send file size from socket before creating this.
+			System.out.println("Please wait downloading file");
+			
+			//reading file from socket
+			InputStream inputStream = socket.getInputStream();
+			fileOutputStream = new FileOutputStream(fileLocation);
+			bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+			bytesRead = inputStream.read(byteArray,0,byteArray.length);					//copying file from socket to byteArray
+
+			current = bytesRead;
+			do {
+				bytesRead =inputStream.read(byteArray, current, (byteArray.length-current));
+				if(bytesRead >= 0) current += bytesRead;
+			} while(bytesRead > -1);
+			bufferedOutputStream.write(byteArray, 0 , current);							//writing byteArray to file
+			bufferedOutputStream.flush();												//flushing buffers
+			
+			System.out.println("File " + fileLocation  + " downloaded ( size: " + current + " bytes read)");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally {
+			if (fileOutputStream != null) fileOutputStream.close();
+			if (bufferedOutputStream != null) bufferedOutputStream.close();
+			if (socket != null) socket.close();
+		}
+	}
+}
+
+Screen shots of program
+
+ 
+
+sender
+
+receiver
+
+output
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Please feel free to comment below you queries and feedback.
+
+Happy coding!
+Category: Java
+Post navigation
+? Hadoop 2.x Map Reduce Plugin for Eclipse
+5 thoughts on “Transfer file using java socket”
+
+    abc@xyz.com'
+    Tejram
+    January 15, 2016
+
+    while sending why ip address is not required?
+    Reply ?	
+        Mohamadali Shaikh Post author
+        January 27, 2016
+
+        Hi Tejram,
+        as we have written serverSocket = new ServerSocket(portNo);
+        on server side, This code automatically creates socket on senders machine with local host(127.0.0.1)
+        Reply ?	
+    caronello.andrea@gmail.com'
+    Andrea Caronello
+    August 6, 2016
+
+    Hello, very nice solution to transfer file with socket. The best I found on the web.
+
+    Just one question.
+
+    How xan I modify the receiver to get the file name from the server?
+
+    Thank you , Best Regards
+    Reply ?	
+    andrew27@gmail.com'
+    Hosting
+    October 7, 2016
+
+    Hello I need to transfer a file over a socket, what i want is to transfer the name of the file then the file data. i have a working server and client. Server
+    Reply ?	
+        Mohamadali Shaikh Post author
+        October 10, 2016
+
+        Hi Andrew,
+
+        Its Simple task. Send name of file just before file as string text same as “Simple chat application in Java” on our website.
+
+        Regards,
+        Mohamadali Shaikh
+        Reply ?	
+
+Leave a Reply
+
+Your email address will not be published. Required fields are marked *
+
+Comment
+
+Name *
+
+Email *
+
+Website
+
+Notify me of follow-up comments by email.
+
+Notify me of new posts by email.
+Search for:
+
+Recent Posts
+
+    Transfer file using java socket August 23, 2015
+    Hadoop 2.x Map Reduce Plugin for Eclipse August 8, 2015
+    Hadoop Map Reduce Tutorials for Beginners August 8, 2015
+    How To UnBlock Websites if your College / Institute Blocked it June 30, 2015
+    Three Easiest Ways to Download Youtube Videos on Ubuntu / Linux Mint April 30, 2015
+
+Linux
+
+    C
+    Cloud
+    CPP
+    Hadoop
+    Java
+    Linux
+    Tips and Tricks
+    Uncategorized
+
+Archives
+
+    August 2015 (3)
+    June 2015 (1)
+    April 2015 (10)
+    March 2015 (3)
+    February 2015 (5)
+    January 2015 (1)
+    October 2014 (5)
+    September 2014 (1)
+    August 2014 (1)
+    July 2014 (2)
+    April 2014 (11)
+    March 2014 (5)
+    February 2014 (15)
+    January 2014 (16)
+    December 2013 (2)
+
+Copyright 2015 @ CodingDevil: Learner's Hub
+codingdevil.com
+Iconic One Theme | Powered by Wordpress
